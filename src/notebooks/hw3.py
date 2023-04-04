@@ -3,7 +3,7 @@
 from pyspark.sql.functions import datediff
 from pyspark.sql.functions import current_date
 from pyspark.sql.types import IntegerType
-from pyspark.sql.functions import avg, upper
+from pyspark.sql.functions import avg, upper, max, min
 
 # COMMAND ----------
 
@@ -97,11 +97,11 @@ display(avg_stoptime_driver_race)
 
 # COMMAND ----------
 
-temp = df_results[df_results['position'] == 1]
+winners = df_results[df_results['position'] == 1]
 
 # COMMAND ----------
 
-display(temp)
+display(winners)
 
 # COMMAND ----------
 
@@ -131,7 +131,16 @@ display(df_drivers)
 
 # COMMAND ----------
 
+## created a new column age in the transform data section
 display(df_lap_drivers)
+
+# COMMAND ----------
+
+max_min_age_race = df_lap_drivers.groupby(['raceId']).agg(max('age'), min('age'))
+
+# COMMAND ----------
+
+display(max_min_age_race)
 
 # COMMAND ----------
 
