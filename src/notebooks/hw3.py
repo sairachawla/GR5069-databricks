@@ -3,7 +3,7 @@
 from pyspark.sql.functions import datediff
 from pyspark.sql.functions import current_date
 from pyspark.sql.types import IntegerType
-from pyspark.sql.functions import avg
+from pyspark.sql.functions import avg, upper
 
 # COMMAND ----------
 
@@ -110,6 +110,28 @@ df_stoptime_firstplace = avg_stoptime_driver_race.join(temp, on=['raceId', 'driv
 # COMMAND ----------
 
 display(df_stoptime_firstplace)
+
+# COMMAND ----------
+
+# MAGIC %md ###### Q.3
+# MAGIC Insert the missing code (e.g: ALO for Alonso) for drivers based on the 'drivers' dataset
+
+# COMMAND ----------
+
+df_drivers = df_drivers.withColumn('code', upper(df_drivers.driverRef[0:3]))
+
+# COMMAND ----------
+
+display(df_drivers)
+
+# COMMAND ----------
+
+# MAGIC %md ###### Q.4
+# MAGIC Who is the youngest and oldest driver for each race? Create a new column called “Age”
+
+# COMMAND ----------
+
+display(df_lap_drivers)
 
 # COMMAND ----------
 
