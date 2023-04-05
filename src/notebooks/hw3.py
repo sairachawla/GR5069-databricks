@@ -3,7 +3,7 @@
 from pyspark.sql.functions import datediff
 from pyspark.sql.functions import current_date
 from pyspark.sql.types import IntegerType
-from pyspark.sql.functions import avg, upper, max, min
+from pyspark.sql.functions import avg, upper, max, min, countDistinct
 
 # COMMAND ----------
 
@@ -141,6 +141,44 @@ max_min_age_race = df_lap_drivers.groupby(['raceId']).agg(max('age'), min('age')
 # COMMAND ----------
 
 display(max_min_age_race)
+
+# COMMAND ----------
+
+# MAGIC %md ###### Q.5
+# MAGIC For a given race, which driver has the most wins and losses?
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md ###### Q.6
+# MAGIC Continue exploring the data by answering your own question.
+
+# COMMAND ----------
+
+# MAGIC %md My question is: How many drivers are there for each race?
+
+# COMMAND ----------
+
+display(df_lap_drivers)
+
+# COMMAND ----------
+
+num_drivers_race = df_lap_drivers.groupby('raceId').agg(countDistinct('driverId'))
+
+# COMMAND ----------
+
+display(num_drivers_race)
 
 # COMMAND ----------
 
