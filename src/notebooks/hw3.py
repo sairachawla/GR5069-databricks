@@ -3,11 +3,11 @@
 from pyspark.sql.functions import datediff
 from pyspark.sql.functions import current_date
 from pyspark.sql.types import IntegerType
-from pyspark.sql.functions import avg, upper, max, min, countDistinct
+from pyspark.sql.functions import avg, upper, max, min, countDistinct, last
 
 # COMMAND ----------
 
-# MAGIC %md #### Read in the dataset
+# MAGIC %md #### Read in the datasets
 
 # COMMAND ----------
 
@@ -51,10 +51,19 @@ display(df_results)
 
 # COMMAND ----------
 
+df_standings = spark.read.csv('s3://columbia-gr5069-main/raw/driver_standings.csv', header=True)
+
+# COMMAND ----------
+
+display(df_standings)
+
+# COMMAND ----------
+
 # MAGIC %md #### Transform data
 
 # COMMAND ----------
 
+## creating age column for q.4
 df_drivers =  df_drivers.withColumn('age', datediff(current_date(), df_drivers.dob)/365)
 
 # COMMAND ----------
@@ -63,6 +72,7 @@ df_drivers = df_drivers.withColumn('age', df_drivers.age.cast(IntegerType()))
 
 # COMMAND ----------
 
+## recreating the dataset we joined in class
 df_lap_drivers = df_drivers.join(df_laptimes, on=['driverId'])
 
 # COMMAND ----------
@@ -72,6 +82,15 @@ df_lap_drivers = df_lap_drivers.join(df_races.select('raceId', 'year', 'name'), 
 # COMMAND ----------
 
 display(df_lap_drivers)
+
+# COMMAND ----------
+
+## joining 2 datasets to answer q.5
+df_driver_standings = df_drivers.join(df_standings, on='driverId')
+
+# COMMAND ----------
+
+display(df_driver_standings)
 
 # COMMAND ----------
 
@@ -97,6 +116,7 @@ display(avg_stoptime_driver_race)
 
 # COMMAND ----------
 
+## want to know about only those who won each race
 winners = df_results[df_results['position'] == 1]
 
 # COMMAND ----------
@@ -105,11 +125,21 @@ display(winners)
 
 # COMMAND ----------
 
-df_stoptime_firstplace = avg_stoptime_driver_race.join(temp, on=['raceId', 'driverId'])
+## joining dataset to get pitstop times for each winner
+df_pitstops_firstplace = winners.join(df_pitstops, on=['raceId', 'driverId'])
 
 # COMMAND ----------
 
-display(df_stoptime_firstplace)
+display(df_pitstops_firstplace)
+
+# COMMAND ----------
+
+## finding the avg duration of each driver on each race and sorting by it
+avg_stoptime_firstplace = df_pitstops_firstplace.groupby(['raceId', 'driverId']).agg(avg('duration')).orderBy(['avg(duration)'])
+
+# COMMAND ----------
+
+display(avg_stoptime_firstplace)
 
 # COMMAND ----------
 
@@ -149,11 +179,11 @@ display(max_min_age_race)
 
 # COMMAND ----------
 
-
+wins_losses_race = df_driver_standings.groupby(['raceId']).agg(last('driverId'), max('wins'), min('wins'))
 
 # COMMAND ----------
 
-
+display(wins_losses_race)
 
 # COMMAND ----------
 
