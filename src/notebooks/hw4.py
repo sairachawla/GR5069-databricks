@@ -17,7 +17,7 @@ import pandas as pd
 
 # COMMAND ----------
 
-df = spark.read.csv('s3://columbia-gr5069-main/raw/driver_standings.csv', header=True)
+df = spark.read.csv('s3://columbia-gr5069-main/raw/results.csv', header=True)
 
 # COMMAND ----------
 
@@ -30,7 +30,11 @@ display(df)
 
 # COMMAND ----------
 
-df = df.withColumn('points', df['points'].cast(DoubleType())).withColumn('position', df['position'].cast(IntegerType()))
+df = df.na.drop("any")
+
+# COMMAND ----------
+
+df = df.withColumn('points', df['points'].cast(DoubleType())).withColumn('position', df['position'].cast(DoubleType())).withColumn('milliseconds', df['milliseconds'].cast(DoubleType()))
 
 # COMMAND ----------
 
@@ -43,7 +47,7 @@ display(df)
 
 # COMMAND ----------
 
-(trainDF, testDF) = df.select(['position','points']).randomSplit([.8, .2], seed=42)
+(trainDF, testDF) = df.select(['position', 'points', 'milliseconds']).randomSplit([.8, .2], seed=42)
 
 # COMMAND ----------
 
@@ -61,8 +65,13 @@ display(trainDF.summary())
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ###### Q1
+
+# COMMAND ----------
+
 # build model using pipline
-assembler = VectorAssembler(inputCols=['position'], outputCol='features')
+assembler = VectorAssembler(inputCols=['position','milliseconds'], outputCol='features')
 rf = RandomForestRegressor(featuresCol = "features", labelCol = "points", numTrees=5)
 pipeline = Pipeline(stages=[assembler, rf])
 model = pipeline.fit(trainDF)
@@ -83,9 +92,14 @@ print("Root Mean Squared Error (RMSE):", rmse)
 
 # COMMAND ----------
 
-with mlflow.start_run(run_name="Saira RF numTrees=10,maxDepth=5") as run:
+# MAGIC %md
+# MAGIC ###### Q2&3
+
+# COMMAND ----------
+
+with mlflow.start_run(run_name="Saira RF numTrees=500,maxDepth=5") as run:
     # Set the model parameters
-    num_trees = 10
+    num_trees = 500
     max_depth = 5
 
     # Log the model parameters
@@ -139,6 +153,16 @@ with mlflow.start_run(run_name="Saira RF numTrees=10,maxDepth=5") as run:
     experimentID = run.info.experiment_id
 
     print("Inside MLflow Run with run_id {} and experiment_id {}".format(runID, experimentID))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ###### Q4
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC My best model was a random forest model with numTrees equal to 500 and maxDepth equal to 5. I made this decision by evaluating based on the metrics: mae, mse, and r2. This model had the lowest mae and mse, and the highest r2. I found that shifting max depth to be greater than 5 did not lead to significant improvements while lowering max depth hindered performance metrics. I found that as I increased numTrees, it performed like an exponential curve on improvement of model metrics. This means that when numTrees is lower, shifts that increase numTrees improve performance metrics more than when numTrees is already at a high amount. 
 
 # COMMAND ----------
 
