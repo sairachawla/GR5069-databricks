@@ -72,7 +72,7 @@ display(trainDF.summary())
 
 # build model using pipline
 assembler = VectorAssembler(inputCols=['position','milliseconds'], outputCol='features')
-rf = RandomForestRegressor(featuresCol = "features", labelCol = "points", numTrees=5)
+rf = RandomForestRegressor(featuresCol = "features", labelCol = "points", numTrees=10, maxDepth=5)
 pipeline = Pipeline(stages=[assembler, rf])
 model = pipeline.fit(trainDF)
 
@@ -97,16 +97,16 @@ print("Root Mean Squared Error (RMSE):", rmse)
 
 # COMMAND ----------
 
-with mlflow.start_run(run_name="Saira RF numTrees=500,maxDepth=5") as run:
+with mlflow.start_run(run_name="Saira RF numTrees=40,maxDepth=9") as run:
     # Set the model parameters
-    num_trees = 500
-    max_depth = 5
+    num_trees = 40
+    max_depth = 9
 
     # Log the model parameters
     mlflow.log_param("num_trees", num_trees)
     mlflow.log_param("max_depth", max_depth)
 
-    vecAssembler = VectorAssembler(inputCols=["position"], outputCol="features")
+    vecAssembler = VectorAssembler(inputCols=["position","milliseconds"], outputCol="features")
 
     vecTrainDF = vecAssembler.transform(trainDF)
 
@@ -145,7 +145,7 @@ with mlflow.start_run(run_name="Saira RF numTrees=500,maxDepth=5") as run:
     importance_df.to_csv("importance.csv", index=False)
     mlflow.log_artifact("importance.csv")
 
-    predictions_df = predDF.select("position", "points", "prediction").toPandas()
+    predictions_df = predDF.select("position", "points", "milliseconds", "prediction").toPandas()
     predictions_df.to_csv("predictions.csv", index=False)
     mlflow.log_artifact("predictions.csv")
     
@@ -162,7 +162,7 @@ with mlflow.start_run(run_name="Saira RF numTrees=500,maxDepth=5") as run:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC My best model was a random forest model with numTrees equal to 500 and maxDepth equal to 5. I made this decision by evaluating based on the metrics: mae, mse, and r2. This model had the lowest mae and mse, and the highest r2. I found that shifting max depth to be greater than 5 did not lead to significant improvements while lowering max depth hindered performance metrics. I found that as I increased numTrees, it performed like an exponential curve on improvement of model metrics. This means that when numTrees is lower, shifts that increase numTrees improve performance metrics more than when numTrees is already at a high amount. 
+# MAGIC My best model was a random forest model with numTrees equal to 40 and maxDepth equal to 9. I made this decision by evaluating based on the metrics: mae, mse, and r2. This model had the lowest mae and mse, and the highest r2. I found that shifting max depth to be greater or lower than 9 hindered performance metrics. When shifting numTrees greater than 50, metrics decreased in model performance. I believe the sweet spot of numTrees to be inbetween 25 and 50 because performance metrics of each model I tried in this range are really similar to each other. The distribution of the values for optimal performance for both numTrees and maxDepth seems to behave like a normal distribution curve with the peak at 9 for maxDepth and between 25 and 50 for numTrees.
 
 # COMMAND ----------
 
